@@ -59,3 +59,19 @@ A arquitetura já possui a fundação para:
 O container local usa PostgreSQL 16, banco `hyperbarber` e volume bind em `.postgres-data`.
 
 Se já existir um volume antigo, mantenha o diretório para preservar dados locais ou remova `.postgres-data` apenas quando quiser recriar o banco do zero.
+
+## Deploy
+
+Variáveis necessárias na Vercel:
+
+- `DATABASE_URL`
+- `NEXTAUTH_URL`
+- `NEXTAUTH_SECRET`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+
+Para produção com Supabase, aplique as migrations antes do deploy:
+
+```bash
+npx prisma migrate deploy
+```
