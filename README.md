@@ -65,6 +65,7 @@ Se já existir um volume antigo, mantenha o diretório para preservar dados loca
 Variáveis necessárias na Vercel:
 
 - `DATABASE_URL`
+- `DIRECT_URL`
 - `NEXTAUTH_URL`
 - `NEXTAUTH_SECRET`
 - `GOOGLE_CLIENT_ID`
