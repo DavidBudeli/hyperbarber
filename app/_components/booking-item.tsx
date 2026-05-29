@@ -112,7 +112,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
 
         <div className="relative mt-6 flex h-[180px] w-full items-end overflow-hidden rounded-[8px]">
           <Image
-            alt={`Mapa do studio ${booking.service.barbershop.name}`}
+            alt={`Mapa da unidade ${booking.service.barbershop.name}`}
             src="/map.png"
             fill
             className="object-cover"

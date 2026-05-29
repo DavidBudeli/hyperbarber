@@ -15,6 +15,8 @@ import HyperAssistantPanel from "@/src/components/marketing/hyper-assistant-pane
 import { getDashboardData } from "@/src/modules/dashboard/dashboard-data"
 import { formatCurrency } from "@/src/lib/format"
 
+export const dynamic = "force-dynamic"
+
 const DashboardPage = async () => {
   const data = await getDashboardData()
 

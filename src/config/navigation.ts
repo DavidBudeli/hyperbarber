@@ -19,7 +19,7 @@ export const mainNavigation = [
   },
   {
     href: "/barbershops",
-    label: "Studios",
+    label: "Unidades",
     icon: ScissorsIcon,
   },
   {

@@ -29,7 +29,7 @@ const Bookings = async () => {
           </h1>
           <p className="mt-3 text-slate-300">
             Acompanhe experiências confirmadas, histórico e detalhes de contato
-            dos studios.
+            das unidades.
           </p>
         </div>
 

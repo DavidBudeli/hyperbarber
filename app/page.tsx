@@ -27,6 +27,8 @@ import HyperAssistantPanel from "@/src/components/marketing/hyper-assistant-pane
 import { DEFAULT_TENANT_SLUG } from "@/src/modules/tenants/current"
 import { formatCurrency } from "@/src/lib/format"
 
+export const dynamic = "force-dynamic"
+
 const platformFeatures = [
   {
     icon: CalendarDaysIcon,
@@ -38,7 +40,7 @@ const platformFeatures = [
     icon: Building2Icon,
     title: "Operação multiunidade",
     description:
-      "Estrutura preparada para studios, equipes, serviços e crescimento white-label.",
+      "Estrutura preparada para unidades, equipes, serviços e crescimento white-label.",
   },
   {
     icon: BotIcon,
@@ -141,7 +143,7 @@ const Home = async () => {
                 </Button>
                 <Button size="lg" variant="outline" className="gap-2" asChild>
                   <Link href="/barbershops">
-                    Explorar studios
+                    Ver operacao demo
                     <SparklesIcon size={18} />
                   </Link>
                 </Button>
@@ -162,7 +164,7 @@ const Home = async () => {
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-3">
                   <div className="rounded-[8px] border border-white/10 bg-black/25 p-4">
-                    <p className="text-xs text-slate-400">Studios ativos</p>
+                    <p className="text-xs text-slate-400">Unidades ativas</p>
                     <p className="mt-2 text-2xl font-semibold text-white">
                       {barbershops.length}
                     </p>
@@ -263,13 +265,13 @@ const Home = async () => {
           <div className="section-shell">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="eyebrow">Marketplace premium</p>
+                <p className="eyebrow">Operacao white-label demo</p>
                 <h2 className="mt-3 text-3xl font-semibold text-white">
-                  Studios prontos para reserva
+                  A marca HyperBarber operando em multiplas unidades
                 </h2>
                 <p className="mt-3 max-w-2xl text-slate-300">
-                  A vitrine do cliente continua funcional, mas agora aparece
-                  como uma experiência de marca moderna e tecnológica.
+                  Esta area simula a experiencia de uma marca cliente: unidades,
+                  servicos, agenda e dados conectados ao mesmo tenant.
                 </p>
               </div>
               <Button variant="outline" className="gap-2" asChild>
@@ -318,7 +320,7 @@ const Home = async () => {
 
             <div className="mt-10">
               <h2 className="mb-3 text-xs font-bold uppercase text-slate-400">
-                Recomendados
+                Unidades da marca
               </h2>
               <div className="flex gap-4 overflow-auto pb-1 [&::-webkit-scrollbar]:hidden">
                 {barbershops.map((barbershop) => (
@@ -329,7 +331,7 @@ const Home = async () => {
 
             <div className="mt-10">
               <h2 className="mb-3 text-xs font-bold uppercase text-slate-400">
-                Populares
+                Operacao em destaque
               </h2>
               <div className="flex gap-4 overflow-auto pb-1 [&::-webkit-scrollbar]:hidden">
                 {popularBarbershops.map((barbershop) => (

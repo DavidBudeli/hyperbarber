@@ -2,7 +2,7 @@ const { PrismaClient } = require("@prisma/client")
 
 const prisma = new PrismaClient()
 
-const tenantSlug = "hyperbarber-demo"
+const tenantSlug = "hyperbarber"
 
 const studioImages = [
   "https://utfs.io/f/c97a2dc9-cf62-468b-a851-bfd2bdde775f-16p.png",
@@ -25,52 +25,52 @@ const serviceImages = {
 
 const studios = [
   {
-    name: "Nova Orbit Studio",
+    name: "HyperBarber Jardins",
     slug: "nova-orbit-studio",
     address: "Rua Oscar Freire, 1200 - São Paulo, SP",
     rating: 4.9,
     description:
-      "Studio premium com agenda digital, atendimento consultivo e experiência de grooming orientada por dados.",
+      "Unidade premium da marca HyperBarber com agenda digital, atendimento consultivo e experiência orientada por dados.",
   },
   {
-    name: "Astra Prime Grooming",
+    name: "HyperBarber Faria Lima",
     slug: "astra-prime-grooming",
     address: "Av. Brigadeiro Faria Lima, 3012 - São Paulo, SP",
     rating: 4.8,
     description:
-      "Operação white-label para clientes que valorizam precisão, privacidade e uma jornada de alto padrão.",
+      "Unidade executiva HyperBarber para clientes que valorizam precisão, privacidade e uma jornada de alto padrão.",
   },
   {
-    name: "Vanta Lab",
+    name: "HyperBarber Savassi",
     slug: "vanta-lab",
     address: "Av. do Contorno, 6061 - Belo Horizonte, MG",
     rating: 4.7,
     description:
-      "Ambiente dark luxury com serviços técnicos, equipe especialista e controle inteligente de horários.",
+      "Operação dark luxury com serviços técnicos, equipe especialista e controle inteligente de horários.",
   },
   {
-    name: "Zenith Men Studio",
+    name: "HyperBarber Moinhos",
     slug: "zenith-men-studio",
     address: "Rua Padre Chagas, 221 - Porto Alegre, RS",
     rating: 4.9,
     description:
-      "Marca premium preparada para fidelização, dados de clientes e automações de relacionamento.",
+      "Unidade preparada para fidelização, dados de clientes e automações de relacionamento.",
   },
   {
-    name: "Cosmos Executive",
+    name: "HyperBarber Batel",
     slug: "cosmos-executive",
     address: "Av. Batel, 1550 - Curitiba, PR",
     rating: 4.8,
     description:
-      "Studio executivo com serviços rápidos, agenda previsível e operação pronta para múltiplas unidades.",
+      "Operação executiva com serviços rápidos, agenda previsível e visão de múltiplas unidades.",
   },
   {
-    name: "Eclipse Signature",
+    name: "HyperBarber Ipanema",
     slug: "eclipse-signature",
     address: "Rua Garcia D'Ávila, 91 - Rio de Janeiro, RJ",
     rating: 4.9,
     description:
-      "Experiência signature com visual limpo, comunicação premium e fluxo digital de ponta a ponta.",
+      "Unidade signature com visual limpo, comunicação premium e fluxo digital de ponta a ponta.",
   },
 ]
 
@@ -228,14 +228,14 @@ const seedDatabase = async () => {
       slug: tenantSlug,
     },
     update: {
-      name: "HyperBarber Demo Studio",
+      name: "HyperBarber",
       legalName: "Hyper Galaxy Labs LTDA",
       status: "ACTIVE",
       logoUrl: null,
       primaryColor: "#7C3AED",
     },
     create: {
-      name: "HyperBarber Demo Studio",
+      name: "HyperBarber",
       slug: tenantSlug,
       legalName: "Hyper Galaxy Labs LTDA",
       status: "ACTIVE",
@@ -363,8 +363,42 @@ const seedDatabase = async () => {
     }
   }
 
+  const seededCustomers = []
+
   for (const customer of customers) {
-    await prisma.customer.upsert({
+    const user = await prisma.user.upsert({
+      where: {
+        email: customer.email,
+      },
+      update: {
+        name: customer.name,
+        role: "CUSTOMER",
+      },
+      create: {
+        name: customer.name,
+        email: customer.email,
+        role: "CUSTOMER",
+      },
+    })
+
+    await prisma.tenantUser.upsert({
+      where: {
+        tenantId_userId: {
+          tenantId: tenant.id,
+          userId: user.id,
+        },
+      },
+      update: {
+        role: "CUSTOMER",
+      },
+      create: {
+        tenantId: tenant.id,
+        userId: user.id,
+        role: "CUSTOMER",
+      },
+    })
+
+    const customerRecord = await prisma.customer.upsert({
       where: {
         tenantId_email: {
           tenantId: tenant.id,
@@ -374,16 +408,103 @@ const seedDatabase = async () => {
       update: {
         name: customer.name,
         phone: customer.phone,
+        userId: user.id,
         lastVisitAt: new Date(),
       },
       create: {
         tenantId: tenant.id,
+        userId: user.id,
         name: customer.name,
         email: customer.email,
         phone: customer.phone,
         lastVisitAt: new Date(),
       },
     })
+
+    seededCustomers.push({ customer: customerRecord, user })
+  }
+
+  const seededUnits = await prisma.barbershop.findMany({
+    where: {
+      tenantId: tenant.id,
+    },
+    include: {
+      services: {
+        where: {
+          isActive: true,
+        },
+        orderBy: {
+          name: "asc",
+        },
+      },
+      staff: {
+        where: {
+          isActive: true,
+        },
+        orderBy: {
+          name: "asc",
+        },
+      },
+    },
+    orderBy: {
+      name: "asc",
+    },
+  })
+
+  const today = new Date()
+  const bookingSlots = [
+    { dayOffset: 0, hour: 10, minute: 0 },
+    { dayOffset: 0, hour: 15, minute: 30 },
+    { dayOffset: 1, hour: 11, minute: 0 },
+    { dayOffset: 2, hour: 18, minute: 30 },
+  ]
+
+  for (let index = 0; index < seededCustomers.length; index++) {
+    const unit = seededUnits[index % seededUnits.length]
+    const service = unit?.services[index % unit.services.length]
+    const staffMember = unit?.staff[index % unit.staff.length]
+    const slot = bookingSlots[index % bookingSlots.length]
+
+    if (!unit || !service) {
+      continue
+    }
+
+    const date = new Date(today)
+    date.setDate(today.getDate() + slot.dayOffset)
+    date.setHours(slot.hour, slot.minute, 0, 0)
+
+    const seededCustomer = seededCustomers[index]
+    const existingBooking = await prisma.booking.findFirst({
+      where: {
+        tenantId: tenant.id,
+        userId: seededCustomer.user.id,
+        serviceId: service.id,
+        date,
+      },
+    })
+
+    const bookingData = {
+      tenantId: tenant.id,
+      userId: seededCustomer.user.id,
+      customerId: seededCustomer.customer.id,
+      staffMemberId: staffMember?.id,
+      serviceId: service.id,
+      status: "CONFIRMED",
+      date,
+    }
+
+    if (existingBooking) {
+      await prisma.booking.update({
+        where: {
+          id: existingBooking.id,
+        },
+        data: bookingData,
+      })
+    } else {
+      await prisma.booking.create({
+        data: bookingData,
+      })
+    }
   }
 }
 

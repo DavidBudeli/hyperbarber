@@ -5,6 +5,8 @@ import Search from "../_components/search"
 import { db } from "../_lib/prisma"
 import { DEFAULT_TENANT_SLUG } from "@/src/modules/tenants/current"
 
+export const dynamic = "force-dynamic"
+
 interface BarbershopsPageProps {
   searchParams: {
     title?: string
@@ -57,20 +59,20 @@ const BarbershopsPage = async ({ searchParams }: BarbershopsPageProps) => {
   })
 
   const resultLabel =
-    searchParams?.title || searchParams?.service || "studios disponíveis"
+    searchParams?.title || searchParams?.service || "unidades da marca"
 
   return (
     <div>
       <Header />
       <main className="section-shell py-8">
         <div className="max-w-3xl">
-          <p className="eyebrow">Marketplace HyperBarber</p>
+          <p className="eyebrow">White-label HyperBarber</p>
           <h1 className="mt-3 text-3xl font-semibold text-white">
-            Encontre a experiência ideal
+            Operacao demo da marca
           </h1>
           <p className="mt-3 text-slate-300">
-            Busque por studios, serviços e experiências premium disponíveis na
-            operação white-label.
+            Valide a experiencia de uma marca HyperBarber com unidades,
+            servicos, agenda e identidade conectadas ao mesmo tenant.
           </p>
         </div>
 
@@ -90,7 +92,7 @@ const BarbershopsPage = async ({ searchParams }: BarbershopsPageProps) => {
           </div>
         ) : (
           <div className="rounded-[8px] border border-white/10 bg-white/[0.035] p-6 text-sm text-slate-300">
-            Nenhum studio encontrado para este filtro.
+            Nenhuma unidade encontrada para este filtro.
           </div>
         )}
       </main>

@@ -15,6 +15,8 @@ import { Button } from "@/app/_components/ui/button"
 import { Sheet, SheetTrigger } from "@/app/_components/ui/sheet"
 import { db } from "@/app/_lib/prisma"
 
+export const dynamic = "force-dynamic"
+
 interface BarbershopPageProps {
   params: {
     id: string
@@ -89,7 +91,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
 
         <div className="section-shell absolute inset-x-0 bottom-0 pb-6">
           <p className="eyebrow">
-            {barbershop.tenant?.branding?.productName ?? "HyperBarber Studio"}
+            {barbershop.tenant?.branding?.productName ?? "HyperBarber"}
           </p>
           <h1 className="mt-2 text-4xl font-semibold text-white">
             {barbershop.name}
@@ -110,7 +112,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
       <main className="section-shell grid gap-8 py-8 lg:grid-cols-[0.72fr_1.28fr]">
         <aside className="space-y-4">
           <div className="rounded-[8px] border border-white/10 bg-white/[0.035] p-5">
-            <p className="eyebrow">Sobre o studio</p>
+            <p className="eyebrow">Sobre a unidade</p>
             <p className="mt-3 text-sm leading-6 text-slate-300">
               {barbershop.description}
             </p>
@@ -127,7 +129,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                   Operação verificada
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-slate-300">
-                  Studio cadastrado em ambiente HyperBarber com serviços, agenda
+                  Unidade conectada ao ambiente HyperBarber com servicos, agenda
                   e dados preparados para white-label.
                 </p>
               </div>
@@ -148,7 +150,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
           <div className="mb-5">
             <p className="eyebrow">Menu de experiências</p>
             <h2 className="mt-2 text-3xl font-semibold text-white">
-              Serviços disponíveis
+              Servicos disponiveis
             </h2>
           </div>
           <div className="space-y-3">
