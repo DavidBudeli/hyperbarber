@@ -1,0 +1,294 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TenantStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  TENANT_OWNER
+  STAFF
+  CUSTOMER
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELED
+  COMPLETED
+  NO_SHOW
+}
+
+enum ThemeMode {
+  DARK
+  LIGHT
+  SYSTEM
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+}
+
+model Tenant {
+  id            String              @id @default(uuid())
+  name          String
+  slug          String              @unique
+  legalName     String?
+  status        TenantStatus        @default(TRIALING)
+  customDomain  String?             @unique
+  logoUrl       String?
+  primaryColor  String              @default("#7C3AED")
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  barbershops   Barbershop[]
+  services      BarbershopService[]
+  bookings      Booking[]
+  customers     Customer[]
+  staffMembers  StaffMember[]
+  users         TenantUser[]
+  branding      BrandingConfig?
+  subscriptions Subscription[]
+}
+
+model TenantUser {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String
+  role      UserRole @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+}
+
+model BrandingConfig {
+  id              String    @id @default(uuid())
+  tenantId        String    @unique
+  productName     String    @default("HyperBarber")
+  logoUrl         String?
+  markUrl         String?
+  primaryColor    String    @default("#7C3AED")
+  accentColor     String    @default("#22D3EE")
+  themeMode       ThemeMode @default(DARK)
+  welcomeHeadline String?
+  customCss       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model Customer {
+  id           String      @id @default(uuid())
+  tenantId     String?
+  barbershopId String?
+  userId       String?
+  name         String
+  email        String?
+  phone        String?
+  notes        String?
+  lastVisitAt  DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  tenant       Tenant?     @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  barbershop   Barbershop? @relation(fields: [barbershopId], references: [id], onDelete: SetNull)
+  user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  bookings     Booking[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([barbershopId])
+  @@index([userId])
+}
+
+model StaffMember {
+  id           String      @id @default(uuid())
+  tenantId     String?
+  barbershopId String?
+  userId       String?
+  name         String
+  roleTitle    String      @default("Barbeiro especialista")
+  bio          String?
+  avatarUrl    String?
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  tenant       Tenant?     @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  barbershop   Barbershop? @relation(fields: [barbershopId], references: [id], onDelete: SetNull)
+  user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  bookings     Booking[]
+
+  @@index([tenantId])
+  @@index([barbershopId])
+  @@index([userId])
+}
+
+model Plan {
+  id            String          @id @default(uuid())
+  code          String          @unique
+  name          String
+  description   String?
+  priceCents    Int
+  interval      BillingInterval @default(MONTHLY)
+  bookingLimit  Int?
+  staffLimit    Int?
+  aiCredits     Int?
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id                 String             @id @default(uuid())
+  tenantId           String
+  planId             String
+  status             SubscriptionStatus @default(TRIALING)
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  tenant             Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan               Plan               @relation(fields: [planId], references: [id])
+
+  @@index([tenantId])
+  @@index([planId])
+}
+
+model User {
+  id            String        @id @default(cuid())
+  name          String?
+  email         String        @unique
+  emailVerified DateTime?
+  image         String?
+  role          UserRole      @default(CUSTOMER)
+  accounts      Account[]
+  sessions      Session[]
+  bookings      Booking[]
+  customers     Customer[]
+  staffProfiles StaffMember[]
+  tenants       TenantUser[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model Barbershop {
+  id          String              @id @default(uuid())
+  tenantId    String?
+  slug        String?
+  name        String
+  address     String
+  phones      String[]
+  description String
+  imageUrl    String
+  rating      Decimal?            @db.Decimal(2, 1)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  tenant      Tenant?             @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  services    BarbershopService[]
+  customers   Customer[]
+  staff       StaffMember[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+}
+
+model BarbershopService {
+  id              String     @id @default(uuid())
+  tenantId        String?
+  name            String
+  description     String
+  imageUrl        String
+  price           Decimal    @db.Decimal(10, 2)
+  durationMinutes Int        @default(30)
+  isActive        Boolean    @default(true)
+  barbershopId    String
+  tenant          Tenant?    @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  barbershop      Barbershop @relation(fields: [barbershopId], references: [id])
+  bookings        Booking[]
+
+  @@unique([barbershopId, name])
+  @@index([tenantId])
+}
+
+model Booking {
+  id            String            @id @default(uuid())
+  tenantId      String?
+  userId        String
+  user          User              @relation(fields: [userId], references: [id])
+  serviceId     String
+  service       BarbershopService @relation(fields: [serviceId], references: [id])
+  customerId    String?
+  customer      Customer?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  staffMemberId String?
+  staffMember   StaffMember?      @relation(fields: [staffMemberId], references: [id], onDelete: SetNull)
+  tenant        Tenant?           @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  status        BookingStatus     @default(CONFIRMED)
+  date          DateTime
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([tenantId])
+  @@index([customerId])
+  @@index([staffMemberId])
+  @@index([serviceId, date])
+}

@@ -1,0 +1,306 @@
+"use client"
+
+import Image from "next/image"
+import { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
+import { isPast, isToday, set } from "date-fns"
+import { ptBR } from "date-fns/locale"
+import { Barbershop, BarbershopService, Booking } from "@prisma/client"
+import { ClockIcon, SparklesIcon } from "lucide-react"
+import { toast } from "sonner"
+import { Button } from "./ui/button"
+import { Card, CardContent } from "./ui/card"
+import {
+  Sheet,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "./ui/sheet"
+import { Calendar } from "./ui/calendar"
+import { Dialog, DialogContent } from "./ui/dialog"
+import SignInDialog from "./sign-in-dialog"
+import BookingSummary from "./booking-summary"
+import { createBooking } from "../_actions/create-booking"
+import { getBookings } from "../_actions/get-bookings"
+import { formatCurrency } from "@/src/lib/format"
+
+interface ServiceItemProps {
+  service: BarbershopService
+  barbershop: Pick<Barbershop, "name">
+}
+
+const TIME_LIST = [
+  "08:00",
+  "08:30",
+  "09:00",
+  "09:30",
+  "10:00",
+  "10:30",
+  "11:00",
+  "11:30",
+  "12:00",
+  "12:30",
+  "13:00",
+  "13:30",
+  "14:00",
+  "14:30",
+  "15:00",
+  "15:30",
+  "16:00",
+  "16:30",
+  "17:00",
+  "17:30",
+  "18:00",
+]
+
+interface GetTimeListProps {
+  bookings: Booking[]
+  selectedDay: Date
+}
+
+const getTimeList = ({ bookings, selectedDay }: GetTimeListProps) => {
+  return TIME_LIST.filter((time) => {
+    const [hour, minutes] = time.split(":").map(Number)
+
+    const timeIsOnThePast = isPast(
+      set(new Date(), { hours: hour, minutes, seconds: 0, milliseconds: 0 }),
+    )
+
+    if (timeIsOnThePast && isToday(selectedDay)) {
+      return false
+    }
+
+    const hasBookingOnCurrentTime = bookings.some(
+      (booking) =>
+        booking.date.getHours() === hour &&
+        booking.date.getMinutes() === minutes,
+    )
+
+    return !hasBookingOnCurrentTime
+  })
+}
+
+const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
+  const { data } = useSession()
+  const router = useRouter()
+  const [signInDialogIsOpen, setSignInDialogIsOpen] = useState(false)
+  const [selectedDay, setSelectedDay] = useState<Date | undefined>(undefined)
+  const [selectedTime, setSelectedTime] = useState<string | undefined>(
+    undefined,
+  )
+  const [dayBookings, setDayBookings] = useState<Booking[]>([])
+  const [bookingSheetIsOpen, setBookingSheetIsOpen] = useState(false)
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      if (!selectedDay) return
+      const bookings = await getBookings({
+        date: selectedDay,
+        serviceId: service.id,
+      })
+      setDayBookings(bookings)
+    }
+
+    fetchBookings()
+  }, [selectedDay, service.id])
+
+  const selectedDate = useMemo(() => {
+    if (!selectedDay || !selectedTime) return
+    return set(selectedDay, {
+      hours: Number(selectedTime.split(":")[0]),
+      minutes: Number(selectedTime.split(":")[1]),
+      seconds: 0,
+      milliseconds: 0,
+    })
+  }, [selectedDay, selectedTime])
+
+  const handleBookingClick = () => {
+    if (data?.user) {
+      return setBookingSheetIsOpen(true)
+    }
+    return setSignInDialogIsOpen(true)
+  }
+
+  const handleBookingSheetOpenChange = () => {
+    setSelectedDay(undefined)
+    setSelectedTime(undefined)
+    setDayBookings([])
+    setBookingSheetIsOpen(false)
+  }
+
+  const handleCreateBooking = async () => {
+    try {
+      if (!selectedDate) return
+      await createBooking({
+        serviceId: service.id,
+        date: selectedDate,
+      })
+      handleBookingSheetOpenChange()
+      toast.success("Reserva confirmada com sucesso.", {
+        action: {
+          label: "Ver agenda",
+          onClick: () => router.push("/bookings"),
+        },
+      })
+    } catch (error) {
+      console.error(error)
+      toast.error("Não foi possível confirmar a reserva.")
+    }
+  }
+
+  const timeList = useMemo(() => {
+    if (!selectedDay) return []
+    return getTimeList({
+      bookings: dayBookings,
+      selectedDay,
+    })
+  }, [dayBookings, selectedDay])
+
+  return (
+    <>
+      <Card className="border-white/10 bg-white/[0.035]">
+        <CardContent className="flex gap-3 p-3">
+          <div className="relative h-[112px] w-[112px] shrink-0 overflow-hidden rounded-[8px]">
+            <Image
+              alt={service.name}
+              src={service.imageUrl}
+              fill
+              className="object-cover"
+            />
+          </div>
+
+          <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
+            <div>
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="text-sm font-semibold text-white">
+                  {service.name}
+                </h3>
+                <div className="flex shrink-0 items-center gap-1 text-xs text-cyan-100">
+                  <ClockIcon size={14} />
+                  {service.durationMinutes}min
+                </div>
+              </div>
+              <p className="mt-2 line-clamp-2 text-sm leading-5 text-slate-400">
+                {service.description}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-bold text-cyan-100">
+                {formatCurrency(Number(service.price))}
+              </p>
+
+              <Sheet
+                open={bookingSheetIsOpen}
+                onOpenChange={handleBookingSheetOpenChange}
+              >
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="gap-2"
+                  onClick={handleBookingClick}
+                >
+                  Reservar
+                  <SparklesIcon size={14} />
+                </Button>
+
+                <SheetContent className="border-white/10 bg-[#070A12] px-0">
+                  <SheetHeader>
+                    <SheetTitle>Confirmar experiência</SheetTitle>
+                  </SheetHeader>
+
+                  <div className="border-b border-white/10 py-5">
+                    <Calendar
+                      mode="single"
+                      locale={ptBR}
+                      selected={selectedDay}
+                      onSelect={setSelectedDay}
+                      fromDate={new Date()}
+                      styles={{
+                        head_cell: {
+                          width: "100%",
+                          textTransform: "capitalize",
+                        },
+                        cell: {
+                          width: "100%",
+                        },
+                        button: {
+                          width: "100%",
+                        },
+                        nav_button_previous: {
+                          width: "32px",
+                          height: "32px",
+                        },
+                        nav_button_next: {
+                          width: "32px",
+                          height: "32px",
+                        },
+                        caption: {
+                          textTransform: "capitalize",
+                        },
+                      }}
+                    />
+                  </div>
+
+                  {selectedDay && (
+                    <div className="flex gap-3 overflow-x-auto border-b border-white/10 p-5 [&::-webkit-scrollbar]:hidden">
+                      {timeList.length > 0 ? (
+                        timeList.map((time) => (
+                          <Button
+                            key={time}
+                            variant={
+                              selectedTime === time ? "default" : "outline"
+                            }
+                            onClick={() => setSelectedTime(time)}
+                          >
+                            {time}
+                          </Button>
+                        ))
+                      ) : (
+                        <p className="text-xs text-slate-400">
+                          Não há horários disponíveis para este dia.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedDate && (
+                    <div className="p-5">
+                      <BookingSummary
+                        barbershop={barbershop}
+                        service={service}
+                        selectedDate={selectedDate}
+                      />
+                    </div>
+                  )}
+
+                  <SheetFooter className="mt-5 px-5">
+                    <Button
+                      onClick={handleCreateBooking}
+                      disabled={!selectedDay || !selectedTime}
+                    >
+                      Confirmar reserva
+                    </Button>
+                  </SheetFooter>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog
+        open={signInDialogIsOpen}
+        onOpenChange={(open) => setSignInDialogIsOpen(open)}
+      >
+        <DialogContent className="w-[90%]">
+          <SignInDialog />
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
+export default ServiceItem

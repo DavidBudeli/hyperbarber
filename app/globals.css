@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  .dark {
+    --background: 224 47% 4%;
+    --foreground: 210 40% 98%;
+
+    --card: 224 35% 8%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 224 35% 8%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 187 100% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 230 25% 13%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 227 21% 14%;
+    --muted-foreground: 215 20% 70%;
+
+    --accent: 255 70% 28%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 225 25% 18%;
+    --input: 225 25% 18%;
+    --ring: 187 100% 55%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border antialiased;
+  }
+  html {
+    @apply h-full;
+  }
+  body {
+    @apply h-full bg-background text-foreground;
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(180deg, #05070d 0%, #080b14 42%, #05070d 100%);
+    background-size:
+      44px 44px,
+      44px 44px,
+      100% 100%;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply border border-white/10 bg-white/[0.045] shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl;
+  }
+
+  .section-shell {
+    @apply mx-auto w-full max-w-7xl px-5 sm:px-6 lg:px-8;
+  }
+
+  .eyebrow {
+    @apply text-xs font-semibold uppercase text-cyan-100/65;
+  }
+}
